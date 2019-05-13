@@ -1,31 +1,68 @@
 import React, { Component } from 'react';
 import './App.css';
-import CreateAccount from './User/CreateAccount'
-import Login from './User/Login'
-import { Container, Col } from 'react-bootstrap'
-import SearchEvent from './SearchEvent'
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faStroopwafel } from '@fortawesome/free-solid-svg-icons'
 import Footer from './Footer';
+import Home from './Home';
+import EventContainer from './Events';
+import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
+import { Switch } from 'react-router-dom';
+import Navbar from './Navigation/TopNavigation';
+import SideBar from './Navigation/SideDrawer';
+import BackDrop from './Navigation/Backdrop';
+import viewUser from './User/viewUser';
+import viewEvent from './Event/viewEvent'
+import editEvent from './Event/editEvent'
+import Login from './User/Login'
+import Signup from './User/CreateAccount';
+import history from './history';
 library.add(faStroopwafel)
 class App extends Component {
+  state = {
+    SideDrawerOpen: false
+  };
+  drawerToggleClickHandler = () => {
+    this.setState((prevState) => {
+      return { SideDrawerOpen: !prevState.SideDrawerOpen }
+    })
+  };
+  backDropClickHandler = () => {
+    this.setState({
+      SideDrawerOpen: false
+    }
+    )
+  }
   render() {
-    return (
-      <div>
-        <SearchEvent ></SearchEvent>
-        <Container className="clsContent">
 
-          <Col className="signin-block">
-            <CreateAccount />
-          </Col>
-          <Col className="signin-block">
-            <Login />
-          </Col>
-        </Container>
+    let backDrop;
+    if (this.state.SideDrawerOpen) {
+
+      backDrop = <BackDrop click={this.backDropClickHandler} />;
+    }
+    return (
+<Router>
+<div className="App">
+        <Navbar drawerClickHandler={this.drawerToggleClickHandler} />
+        <SideBar show={this.state.SideDrawerOpen} />
+        {backDrop}
+          <div className="Appbody">
+            <div>
+              <Switch>
+                <Route path="/" exact component={Home} />
+                <Route path="/events/:id" exact component={viewEvent} />
+                <Route path="/events/editevent/:id" exact component={editEvent} />
+                <Route path="/events" exact component={EventContainer} />
+                
+                <Route path="/login" component={Login} />
+                <Route path="/signup" component={Signup} />
+                <Route path="/profile/user" component={viewUser} />
+              </Switch>
+            </div>
+         </div>
         <Footer></Footer>
-      </div>
-    );
+      </div>    
+</Router>
+      );
   }
 }
 
