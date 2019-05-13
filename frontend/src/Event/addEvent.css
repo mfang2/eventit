@@ -5,14 +5,22 @@
 
 .clsTextField {
   width: 20rem;
+  height: 36px;
+  border-radius: 18px;
+  padding-left: 8px;
 }
+
 .clsTextFieldLabel {
   width: 10rem;
   font-weight: bold;
 }
 
 .clsButton {
-  width: 10rem;
+  width: 20%;
+  margin-left: 40%;
+  height: 30px;
+  margin-bottom: 8px;
+  border-radius: 15px;
 }
 
 .addEventCard {
@@ -21,7 +29,6 @@
 }
 .clsSuggestionItem {
   color: #ffffff;
-  
 }
 
 .clsSuggestionItem-active {

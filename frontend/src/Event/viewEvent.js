@@ -71,11 +71,14 @@ class ViewEvent extends Component {
         }
         if (this.props.id !== null && this.state.eventData && this.state.eventData.event_owner && (this.props.id === this.state.eventData.event_owner)) {
             actionBtn = <Link to={`/events/editevent/${this.props.match.params.id}`}><button> Update Event</button></Link>
+            actionBtn = <Link to={`//localhost:3002`}target="_blank"><button> Chat</button></Link>
         }
         else if (this.state.isJoined)
             actionBtn = <button disabled> You are Registered!</button>
-        else
+        else {
             actionBtn = <button onClick={this.registerClick}> Register</button>
+            actionBtn = <Link to={`//localhost:3002`} target="_blank"><button> Chat</button></Link>
+        }
         if (this.state.eventData !== undefined) {
             body = (<div className="container">
                 {error}
