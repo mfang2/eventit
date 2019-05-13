@@ -1,15 +1,12 @@
 import React, { Component } from 'react'
-import { Container, Row } from 'react-bootstrap'
 import { auth } from '../firebase';
 import { connect } from "react-redux";
 import { UserDetails } from "../action";
 import './User.css';
 import MessageHandler from '../Message/messageHandler'
 import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
-import './UserFormStyle.css'
 
 class Login extends Component {
-
   constructor(props) {
     super(props)
     this.state = {
@@ -94,14 +91,12 @@ class Login extends Component {
   async submit(event) {
     event.preventDefault();
     if (this.state.email === "" || this.state.password === "") {
-      console.log("Empty field")
+      this.setState({ isError: true, errorMessage: "Email and Password Cannot be empty" });
       return
     }
     var msgtemp = await auth.signInWithEmailAndPassword(this.state.email, this.state.password)
       .then(async (res) => {
         const user = res.user
-        console.log("user");
-        console.log(user);
         await this.props.UserDetails(user.uid);
 
 
@@ -109,7 +104,6 @@ class Login extends Component {
         this.setState({ isError: true, errorMessage: err.message });
         return err;
       });
-      debugger;
     if (msgtemp == undefined) {
       var link = document.getElementById('test');
       link.click();

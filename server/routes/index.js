@@ -9,6 +9,6 @@ const constructorMethod = app => {
     app.use("*",cors(), (req, res) => {
         res.redirect("http://localhost:3001/eventit");
       });
-      */
+    */
 };
 module.exports = constructorMethod;  

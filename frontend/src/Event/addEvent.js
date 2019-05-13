@@ -1,8 +1,9 @@
 import React, { Component } from 'react'
 import ReactModal from 'react-modal';
-import { Container, Row, Button } from 'react-bootstrap';
-import axios from 'axios';
+import MessageHandler from '../Message/messageHandler'
+import api from '../api';
 import { classnames } from '../helpers';
+import { connect } from "react-redux";
 import PlacesAutocomplete from 'react-places-autocomplete';
 import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
 import {
@@ -10,7 +11,7 @@ import {
     geocodeByPlaceId,
     getLatLng,
 } from 'react-places-autocomplete';
-import '../search.css';
+import './addEvent.css';
 ReactModal.setAppElement('#root');
 class AddEvent extends Component {
     constructor(props) {
@@ -19,16 +20,18 @@ class AddEvent extends Component {
             showCreateEvent: this.props.isOpen || true,
             selectedFile: null,
             address: '',
+            isError: false,
             errorMessage: '',
             isGeocoding: false,
             event_title: '',
-            event_type:'',
+            event_type: '',
             event_description: '',
-            event_date: new Date(),
-            event_from_time: undefined,
-            event_to_time: undefined,
-            event_max_participants: undefined,
-            event_picture: undefined
+            event_date: '',
+            event_from_time: '',
+            event_to_time: '',
+            event_max_participants: 0,
+            event_picture: '',
+            event_keyword: ''
         };
         this.handleOpenCreateEvent = this.handleOpenCreateEvent.bind(this);
         this.handleCloseCreateEvent = this.handleCloseCreateEvent.bind(this);
@@ -40,51 +43,65 @@ class AddEvent extends Component {
         this.setState({ showCreateEvent: true });
     }
     handleCloseCreateEvent() {
+        this.setState({ isError: false, errorMessage: '' });
         this.setState({ showCreateEvent: false });
         this.props.handleClose(false);
     }
     async handleSubmit(event) {
-        event.preventDefault();
-        console.log(event.target);
-        const data = {
-            "event_name": this.state.event_title,
-            "event_type": '',
-            "event_description": this.state.event_description,
-            "event_location": this.state.address,
-            "event_end": this.state.event_to_time,
-            "event_begin": this.state.event_from_time,
-            "event_owner": this.props.id,
-            "event_count": this.state.event_max_participants,
-            "event_keyword": '',
-            "event_ownerPhone": '',
-            "event_ownerContact": '',
-            "event_ownerName": ''
-        };
+        try {
+            event.preventDefault();
+            this.setState({ isError: false, errorMessage: '' });
+            var userData = await api.get(`eventit/user/profile/${this.props.id}`);
+            const data = {
+                "event_name": this.state.event_title,
+                "event_type": this.state.event_type,
+                "event_description": this.state.event_description,
+                "event_location": this.state.address,
+                "event_date": this.state.event_date,
+                "event_end": this.state.event_to_time,
+                "event_begin": this.state.event_from_time,
+                "event_owner": this.props.id,
+                "event_count": this.state.event_max_participants,
+                "event_keyword": this.state.event_keyword,
+                "event_ownerPhone": userData.data.phone,
+                "event_ownerContact": userData.data.user_name,
+                "event_ownerName": userData.data.name
+            };
+            const url = 'http://localhost:3001/eventit/event/addevent';
+            var temp = await fetch(url, {
+                method: 'post',
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            this.setState({ showCreateEvent: false });
+            this.props.handleClose(false);
+        }
+        catch (err) {
+            this.setState({ isError: true, errorMessage: err });
+            return err;
+        }
 
-        const url = 'http://localhost:3001/eventit/event/addevent';
-        var temp = await fetch(url, {
-          method: 'post',
-          headers: {
-              'Access-Control-Allow-Origin':'*',
-              'Content-Type':'application/json'},
-          body: JSON.stringify(data)
-
-
-        })
-        console.log(data);
-debugger;
-        this.setState({ showCreateEvent: false });
-        this.props.handleClose(false);
     }
-    handleAllChanges=(e)=> {
-        if (e.target.name === 'event_title') this.setState({ event_title: e.target.value });
-        if (e.target.name === 'event_type') this.setState({ event_type: e.target.value });
-        if (e.target.name === 'event_description') this.setState({ event_description: e.target.value });
-        if (e.target.name === 'event_date') this.setState({ event_date: e.target.value });
-        if (e.target.name === 'event_from_time') this.setState({ event_from_time: e.target.value });
-        if (e.target.name === 'event_to_time') this.setState({ event_to_time: e.target.value });
-        if (e.target.name === 'event_max_participants') this.setState({ event_max_participants: e.target.value });
-        if (e.target.name === 'event_picture') this.setState({ event_picture: e.target.value });
+    handleAllChanges = (e) => {
+        try {
+            if (e.target.name === 'event_title') { this.setState({ event_title: e.target.value }); }
+            else if (e.target.name === 'event_type') { this.setState({ event_type: e.target.value }); }
+            else if (e.target.name === 'event_description') { this.setState({ event_description: e.target.value }); }
+            else if (e.target.name === 'event_date') { this.setState({ event_date: e.target.value }); }
+            else if (e.target.name === 'event_from_time') { this.setState({ event_from_time: e.target.value }); }
+            else if (e.target.name === 'event_to_time') { this.setState({ event_to_time: e.target.value }); }
+            else if (e.target.name === 'event_max_participants') { this.setState({ event_max_participants: e.target.value }); }
+            // if (e.target.name === 'event_picture') this.setState({ event_picture: e.target.value });
+            else if (e.target.name === 'event_date') { this.setState({ event_date: e.target.value }); }
+            else if (e.target.name === 'event_keyword') { this.setState({ event_keyword: e.target.value }); }
+        } catch (err) {
+            this.setState({ isError: true, errorMessage: err });
+            return err;
+        }
+
     }
     fileSelectedHandler = event => {
         this.setState({
@@ -93,24 +110,30 @@ debugger;
         console.log(event.target.files[0]);
     }
     handleAddressChange = address => {
-        this.setState({
-            address,
-        });
+        try {
+            this.setState({ isError: false, errorMessage: '' });
+            this.setState({
+                address,
+            });
+        } catch (err) {
+            this.setState({ isError: true, errorMessage: err });
+            return err;
+        }
     };
-
     handleSelect = selected => {
+        this.setState({ isError: false, errorMessage: '' });
         this.setState({ isGeocoding: true, address: selected });
-        debugger;
         geocodeByAddress(selected)
             .then((res) => {
                 this.setState({
                     address: res[0]["formatted_address"],
                     isGeocoding: false,
                 });
-                console.log(res);
             })
             .catch(error => {
                 this.setState({ isGeocoding: false });
+                this.setState({ isError: true });
+                this.setState({ errorMessage: error });
                 console.log('error', error); // eslint-disable-line no-console
             });
     };
@@ -131,71 +154,72 @@ debugger;
         const isGeocoding = this.state.isGeocoding;
 
         let body;
-        body = (<div>
-            <form
-                className='form'
-                id='add-Event'
-                onSubmit={this.handleSubmit}>
-                <div className='form-group'>
-                    <label>
-                        Title:
-                            <input
+        if (this.props.id != null) {
+            body = (<div>
+                <form
+                    className='form'
+                    id='add-Event'
+                    onSubmit={this.handleSubmit}>
+                    <div className='form-group'>
+                        <label name="event_title" className="clsTextFieldLabel"> Title:</label>
+
+                        <input
                             required
                             autoFocus={true}
                             className="clsTextField"
                             name="event_title"
                             onChange={this.handleAllChanges}
                         />
-                    </label>
-                </div>
-                <div className='form-group'>
-                    <label>
-                        Type:
-                        <input required type='text' className='clsTextField' name="event_type" />
-                    </label>
-                </div>
-                <div className='form-group'>
-                    <label>
-                        Description:
-                        <input required type='textarea' className='clsTextField' name="event_description" />
-                    </label>
-                </div>
-                <div className='form-group'>
-                    <label>
-                        Date:
-                        <input required type='date' className='clsTextField' name="event_date" />
-                    </label>
-                </div>
-                <div className='form-group'>
-                    <label>
-                        From Time:
-                        <input required type='time' className='clsTextField' name="event_from_time" />
-                    </label>
-                </div>
-                <div className='form-group'>
-                    <label>
-                        To Time:
-                        <input required type='time' className='clsTextField' name="event_to_time" />
-                    </label>
-                </div>
-                <div className='form-group'>
-                    <label>
-                        Max participants:
-                        <input required type='number' className='clsTextField' name="event_max_participants" />
-                    </label>
-                </div>
-                <PlacesAutocomplete onChange={this.handleAddressChange}
-                    value={address}
-                    onSelect={this.handleSelect}
-                    onError={this.handleError}
-                    shouldFetchSuggestions={address.length > 2}>
-                    {
-                        ({ getInputProps, suggestions, getSuggestionItemProps }) => {
-                            return (
-                                <div className='form-group'>
-                                    <label>
-                                        Address:
-                        <input name="event_address" {...getInputProps({
+
+                    </div>
+                    <div className='form-group'>
+                        <label name="event_type" className="clsTextFieldLabel"> Type:</label>
+
+                        <input required type='text' className='clsTextField' name="event_type" onChange={this.handleAllChanges} />
+
+                    </div>
+                    <div className='form-group'>
+                        <label name="event_description" className="clsTextFieldLabel"> Description:</label>
+
+                        <input required className='clsTextField' name="event_description" onChange={this.handleAllChanges} />
+
+                    </div>
+                    <div className='form-group'>
+                        <label name="event_date" className="clsTextFieldLabel"> Date: </label>
+
+                        <input required type='date' className='clsTextField' name="event_date" onChange={this.handleAllChanges} />
+
+                    </div>
+                    <div className='form-group'>
+                        <label name="event_from_time" className="clsTextFieldLabel">  Start Time:</label>
+
+                        <input required type='time' className='clsTextField' name="event_from_time" onChange={this.handleAllChanges} />
+
+                    </div>
+                    <div className='form-group'>
+                        <label name="event_to_time" className="clsTextFieldLabel">End Time: </label>
+
+                        <input required type='time' className='clsTextField' name="event_to_time" onChange={this.handleAllChanges} />
+
+                    </div>
+                    <div className='form-group'>
+                        <label name="event_max_participants" className="clsTextFieldLabel">  Max participants:</label>
+
+                        <input required type='number' className='clsTextField' name="event_max_participants" onChange={this.handleAllChanges} />
+
+                    </div>
+                    <PlacesAutocomplete onChange={this.handleAddressChange}
+                        value={address}
+                        onSelect={this.handleSelect}
+                        onError={this.handleError}
+                        shouldFetchSuggestions={address.length > 2}>
+                        {
+                            ({ getInputProps, suggestions, getSuggestionItemProps }) => {
+                                return (
+                                    <div className='form-group'>
+                                        <label name="event_address" className="clsTextFieldLabel"> Address:</label>
+
+                                        <input name="event_address" {...getInputProps({
                                             placeholder: 'Address',
                                             className: 'clsTextField',
                                             required: true,
@@ -208,14 +232,13 @@ debugger;
                                             > x        </button>
                                         )}
                                         {suggestions.length > 0 && (
-                                            <div className="Demo__autocomplete-container">
+                                            <div className="">
                                                 {suggestions.map(suggestion => {
-                                                    const className = classnames('Demo__suggestion-item', {
-                                                        'Demo__suggestion-item--active': suggestion.active,
+                                                    const className = classnames('clsSuggestionItem', {
+                                                        'clsSuggestionItem-active': suggestion.active,
                                                     });
 
                                                     return (
-                                                        /* eslint-disable react/jsx-key */
                                                         <div
                                                             {...getSuggestionItemProps(suggestion, { className })}
                                                         >
@@ -227,38 +250,52 @@ debugger;
                                                             </small>
                                                         </div>
                                                     );
-                                                    /* eslint-enable react/jsx-key */
                                                 })}
                                             </div>
                                         )}
-                                    </label>
 
-                                </div>
-                            );
+
+                                    </div>
+                                );
+                            }
                         }
-                    }
-                </PlacesAutocomplete>
-                <div className='form-group'>
-                    <label>
-                        Upload Cover Photo:
-                        <input type='file' onChange={this.fileSelectedHandler} className='clsTextField' name="event_picture" />
-                    </label>
-                </div>
-                <button type='submit' >
-                    Add Event
-                            </button>
-            </form>
+                    </PlacesAutocomplete>
+                    {/* <div className='form-group'>
+                        <label>
+                            Upload Cover Photo:
+                            <input type='file' onChange={this.fileSelectedHandler} className='clsTextField' name="event_picture" accept="image/jpg, image/jpeg, image/png, image/gif, image/bmp"/>
+                        </label>
+                    </div> */}
+                    <div className='form-group'>
+                        <label name="event_keyword" className="clsTextFieldLabel"> Keywords:</label>
 
-        </div>)
+                        <input required type='text' className='clsTextField' name="event_keyword" onChange={this.handleAllChanges} />
+
+                    </div>
+                    <button type='submit' className="clsButton">
+                        Add Event
+                                </button>
+                </form>
+
+            </div>)
+
+        } else {
+            body = (<div>
+                <p>
+                    Please <Link to="/login">Login</Link> or <Link to="/signup">Create an Account</Link>Create an Account to perform this action
+            </p>
+            </div>)
+        }
         return (
             <div>
                 <ReactModal
                     name='createEvent'
                     isOpen={this.state.showCreateEvent}
                     contentLabel='Add Event'
-                    className="card">
+                    className="addEventCard"
+                >
                     {body}
-                    <button onClick={this.handleCloseCreateEvent}>
+                    <button onClick={this.handleCloseCreateEvent} className="clsButton">
                         Cancel
                 </button>
                 </ReactModal>
@@ -266,4 +303,11 @@ debugger;
         );
     };
 }
-export default AddEvent;
+const mapStateToProps = (state) => {
+
+    console.log("home comp redux-state");
+    console.log(state);
+    return { id: state.authentication.id };
+}
+
+export default connect(mapStateToProps)(AddEvent);

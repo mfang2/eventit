@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Container, Row, Button } from 'react-bootstrap'
+import MessageHandler from '../Message/messageHandler'
 import api from '../api';
 import { Link } from 'react-router-dom';
 import { connect } from "react-redux";
@@ -8,33 +8,81 @@ class ViewEvent extends Component {
         super(props)
         this.state = {
             eventId: undefined,
-            eventData: undefined
+            eventData: undefined,
+            isJoined: false,
+            isError: false,
+            errorMessage: ''
         }
         this.registerClick = this.registerClick.bind(this);
     }
-    componentDidMount() {
-        this.setState({ eventId: this.props.match.params.id });
-        this.getEvent();
+    async componentDidMount() {
+        try {
+            this.setState({ eventId: this.props.match.params.id });
+            await this.getEvent();
+        } catch (err) {
+            this.setState({ isError: true, errorMessage: err });
+            return err;
+        }
+
     }
     async getEvent() {
-        const l_objResponse = await api.get(`/eventit/event/getevent/${this.props.match.params.id}`);
-        this.setState({ eventData: l_objResponse.data });
+        try {
+            this.setState({ isError: false, errorMessage: '' });
+            const l_objResponse = await api.get(`/eventit/event/getevent/${this.props.match.params.id}`);
+            this.setState({ eventData: l_objResponse.data });
+            if (this.props.id != null && this.state.eventData.event_joiners.indexOf(this.props.id) > -1) {
+                this.setState({ isJoined: true });
+            }
+        } catch (err) {
+            this.setState({ isError: true, errorMessage: err });
+            return err;
+        }
+
     }
     async registerClick() {
-        const l_objResponse = await api.get(`/eventit/event/getevent/${this.props.match.params.id}`);
+        try {
+            this.setState({ isError: false, errorMessage: '' });
+            const data = {
+                "event_id": this.props.match.params.id,
+                "user_id": this.props.id,
+
+            };
+            const url = `/eventit/event/joinEvent`;
+            var temp = await api.post(url, data);
+        }
+        catch (err) {
+            this.setState({ isError: true, errorMessage: err });
+            return err;
+        }
     }
     render() {
         let actionBtn = null;
         let body = null;
-        if (this.props.id != null) {
+        var error = null;
+        if (this.state.isError) {
+            error = <MessageHandler message={{ isError: this.state.isError, message: this.state.errorMessage }} />
+        }
+        else if (!this.state.isError && this.state.errorMessage !== '') {
+            error = <MessageHandler message={{ isError: this.state.isError, message: this.state.errorMessage }} />
+        }
+        else {
+            error = null
+        }
+        if (this.props.id !== null && this.state.eventData && this.state.eventData.event_owner && (this.props.id === this.state.eventData.event_owner)) {
             actionBtn = <Link to={`/events/editevent/${this.props.match.params.id}`}><button> Update Event</button></Link>
             actionBtn = <Link to={`//localhost:3002`} target="_blank"><button> Chat</button></Link>
         }
-        else
-            actionBtn = <button> Register</button>
-            actionBtn = <Link to={`//localhost:3002`} target="_blank"><button> Chat</button></Link> //remove if we want only already registered
+        else if (this.state.isJoined) {
+            actionBtn = <button disabled> You are Registered!</button>
+            actionBtn = <Link to={`//localhost:3002`} target="_blank"><button type="chat_button"> Chat</button></Link>
+        }
+        else {
+            actionBtn = <button onClick={this.registerClick}> Register</button>
+            actionBtn = <Link to={`//localhost:3002`} target="_blank"><button> Chat</button></Link>
+        }
         if (this.state.eventData !== undefined) {
             body = (<div className="container">
+                {error}
                 <div className="row">
                     <div className="col-md-offset-2 col-md-8 col-lg-offset-3 col-lg-6">
                         <div className="well profile">
@@ -43,7 +91,7 @@ class ViewEvent extends Component {
 
                                     <h2>{this.state.eventData.event_name}</h2>
                                     <p><strong>Description: </strong> {this.state.eventData.event_description} </p>
-                                   
+
                                 </div>
 
                             </div>
@@ -57,16 +105,13 @@ class ViewEvent extends Component {
             </div>)
                 ;
         }
-        
+
         return (<div className="globalContainer">
             {body}
         </div>);
     };
 }
 const mapStateToProps = (state) => {
-
-    console.log("home comp redux-state");
-    console.log(state);
     return {
         id: state.authentication.id
     };

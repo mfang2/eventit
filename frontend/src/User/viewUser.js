@@ -4,33 +4,52 @@ import { Link } from 'react-router-dom';
 import api from '../api'
 import { connect } from "react-redux";
 import Event from '../Events'
+import MessageHandler from '../Message/messageHandler'
 class ViewUser extends Component {
     constructor(props) {
         super(props)
         this.state = {
             userId: this.props.id,
             userData: undefined,
+            isError: false,
+            errorMessage: ''
         }
     }
     async componentWillMount() {
-        if (this.props.id) {
-            var url = await api.get(`eventit/user/profile/${this.props.id}`);
-            this.setState({
-                userData: url.data
-            });
-            debugger;
+        try {
+            if (this.props.id) {
+                var url = await api.get(`eventit/user/profile/${this.props.id}`);
+                this.setState({
+                    userData: url.data
+                });
+            }
+        } catch (e) {
+            this.setState({ isError: true, errorMessage: e });
+            return
         }
+
 
     }
     async componentDidMount() {
 
     }
     render() {
+        var error = null;
+        if (this.state.isError) {
+            error = <MessageHandler message={{ isError: this.state.isError, message: this.state.errorMessage }} />
+        }
+        else if (!this.state.isError && this.state.errorMessage !== '') {
+            error = <MessageHandler message={{ isError: this.state.isError, message: this.state.errorMessage }} />
+        }
+        else {
+            error = null
+        }
         let body = null;
         let eventModule = null;
         if (this.props.id !== null && this.state.userData !== undefined) {
             eventModule = <Event userId={this.props.id} />
             body = (<div className="container">
+                {error}
                 <div className="row">
                     <div className="col-md-offset-2 col-md-8 col-lg-offset-3 col-lg-6">
                         <div className="well profile">
@@ -46,11 +65,11 @@ class ViewUser extends Component {
                         </div>
                     </div>
                     <div className="col-xs-12 col-sm-4 col-lg-6">
-                    <div>
-                        <h2>
-                            My Events
+                        <div>
+                            <h2>
+                                My Events
                         </h2>
-                    </div>
+                        </div>
                         {eventModule}
                     </div>
                 </div>
@@ -63,7 +82,7 @@ class ViewUser extends Component {
             body = (<div>
                 <p>
                     Please <Link to="/login">Login</Link> or <Link to="/signup">Create an Account</Link>Create an Account to perform this action
-            </p>
+                </p>
             </div>);
         }
         return (<div className="globalContainer">
@@ -73,12 +92,8 @@ class ViewUser extends Component {
 }
 
 const mapStateToProps = (state) => {
-
-    console.log("home comp redux-state");
-    console.log(state);
     return {
         id: state.authentication.id
     };
 }
-
 export default connect(mapStateToProps)(ViewUser);
