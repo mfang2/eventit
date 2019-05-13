@@ -3,6 +3,7 @@ import MessageHandler from '../Message/messageHandler'
 import api from '../api';
 import { Link } from 'react-router-dom';
 import { connect } from "react-redux";
+import './viewEvent.css';
 class ViewEvent extends Component {
     constructor(props) {
         super(props)
@@ -70,16 +71,11 @@ class ViewEvent extends Component {
         }
         if (this.props.id !== null && this.state.eventData && this.state.eventData.event_owner && (this.props.id === this.state.eventData.event_owner)) {
             actionBtn = <Link to={`/events/editevent/${this.props.match.params.id}`}><button> Update Event</button></Link>
-            actionBtn = <Link to={`//localhost:3002`} target="_blank"><button> Chat</button></Link>
         }
-        else if (this.state.isJoined) {
+        else if (this.state.isJoined)
             actionBtn = <button disabled> You are Registered!</button>
-            actionBtn = <Link to={`//localhost:3002`} target="_blank"><button type="chat_button"> Chat</button></Link>
-        }
-        else {
+        else
             actionBtn = <button onClick={this.registerClick}> Register</button>
-            actionBtn = <Link to={`//localhost:3002`} target="_blank"><button> Chat</button></Link>
-        }
         if (this.state.eventData !== undefined) {
             body = (<div className="container">
                 {error}

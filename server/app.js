@@ -19,28 +19,3 @@ app.listen(3001, () => {
     console.log("We've now got a server!");
     console.log("Event.it routes will be running on http://localhost:3001");
   });
-
-
-//for socket.io
-var server = require('http').createServer(app);
-var http = require('http').Server(app);
-var io = require('socket.io')(server);
-
-app.get('/', function(req, res){
-  res.sendFile(__dirname + '/index.html');
-});
-
-io.on('connection', function(socket){
-  console.log('a user connected');
-  socket.on('chat message', function(msg){
-    io.emit('chat message', msg);
-    console.log('message: ' + msg);
-  });
-  socket.on('disconnect', function(){
-    console.log('user disconnected');
-  });
-});
-
-http.listen(3002, function(){
-  console.log('chat listening on *:3002');
-});
