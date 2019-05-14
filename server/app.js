@@ -20,7 +20,8 @@ app.listen(3001, () => {
     console.log("Event.it routes will be running on http://localhost:3001");
   });
 
-  var http = require('http').Server(app);
+  
+var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
 app.get('/', function(req, res){

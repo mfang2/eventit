@@ -4,6 +4,7 @@ import api from './api';
 import MessageHandler from './Message/messageHandler'
 import PlacesAutocomplete from 'react-places-autocomplete';
 import { Link } from 'react-router-dom';
+import ToggleButton from 'react-toggle-button'
 import {
   geocodeByAddress,
   geocodeByPlaceId,
@@ -20,7 +21,10 @@ class SearchEvent extends Component {
       longitude: null,
       isError: false,
       isGeocoding: false,
+      value: false,
+      event: ''
     };
+    this.handleEventChange = this.handleEventChange.bind(this);
   }
 
   handleChange = address => {
@@ -29,6 +33,12 @@ class SearchEvent extends Component {
       latitude: null,
       longitude: null,
       errorMessage: '',
+    });
+  };
+  handleEventChange = event => {
+    debugger;
+    this.setState({
+      event: event.target.value
     });
   };
 
@@ -72,26 +82,21 @@ class SearchEvent extends Component {
   };
 
   render() {
+    const clsThumbStyle = { borderRadius: '0.2rem', };
+    const clsTrackStyle = { borderRadius: '0.2rem' };
+    const clsLabelStyle = { width: '50rem', padding: "1rem!important" };
+
     const {
       address,
       errorMessage,
       latitude,
       longitude,
       isGeocoding,
+      event,
     } = this.state;
-    var error = null;
-    if (this.state.isError) {
-      error = <MessageHandler message={{ isError: this.state.isError, message: this.state.errorMessage }} />
-    }
-    else if (!this.state.isError && this.state.errorMessage !== '') {
-      error = <MessageHandler message={{ isError: this.state.isError, message: this.state.errorMessage }} />
-    }
-    else {
-      error = null
-    }
-    return (
-      <div >
-        {error}
+    let body = null;
+    if (this.state.value) {
+      body = (<div>
         <PlacesAutocomplete
           onChange={this.handleChange}
           value={address}
@@ -100,7 +105,7 @@ class SearchEvent extends Component {
           shouldFetchSuggestions={address.length > 2}>
           {({ getInputProps, suggestions, getSuggestionItemProps }) => {
             return (
-              <div className="clssearch-container">
+              <div>
                 <div className="clssearch-box">
                   <input
                     {...getInputProps({
@@ -114,7 +119,7 @@ class SearchEvent extends Component {
                       onClick={this.handleCloseClick}
                     >
                       x
-                        </button>
+                </button>
                   )}
                   {suggestions.length > 0 && (
                     <div className=" clsSuggestionContainer">
@@ -144,31 +149,35 @@ class SearchEvent extends Component {
             );
           }}
         </PlacesAutocomplete>
-        {errorMessage.length > 0 && (
-          <div className="Demo__error-message">{this.state.errorMessage}</div>
-        )}
+        {
+          errorMessage.length > 0 && (
+            <div className="Demo__error-message">{this.state.errorMessage}</div>
+          )
+        }
 
-        {((latitude && longitude) || isGeocoding) && (
-          <div>
-            <h3 className="Demo__geocode-result-header">Geocode result</h3>
-            {isGeocoding ? (
-              <div>
-                <i className="fa fa-spinner fa-pulse fa-3x fa-fw Demo__spinner" />
-              </div>
-            ) : (
+        {
+          ((latitude && longitude) || isGeocoding) && (
+            <div>
+              <h3 className="Demo__geocode-result-header">Geocode result</h3>
+              {isGeocoding ? (
                 <div>
-                  <div className="Demo__geocode-result-item--lat">
-                    <label>Latitude:</label>
-                    <span>{latitude}</span>
-                  </div>
-                  <div className="Demo__geocode-result-item--lng">
-                    <label>Longitude:</label>
-                    <span>{longitude}</span>
-                  </div>
+                  <i className="fa fa-spinner fa-pulse fa-3x fa-fw Demo__spinner" />
                 </div>
-              )}
-          </div>
-        )}
+              ) : (
+                  <div>
+                    <div className="Demo__geocode-result-item--lat">
+                      <label>Latitude:</label>
+                      <span>{latitude}</span>
+                    </div>
+                    <div className="Demo__geocode-result-item--lng">
+                      <label>Longitude:</label>
+                      <span>{longitude}</span>
+                    </div>
+                  </div>
+                )}
+            </div>
+          )
+        }
         <Link to={{
           pathname: "/events", address: {
             latitude: this.state.latitude,
@@ -177,6 +186,96 @@ class SearchEvent extends Component {
           }
         }} style={{ hidden: true }} id="test">
         </Link>
+      </div>
+
+      )
+    }
+    else {
+      body = (
+        <div>
+          <div>
+            <div className="clssearch-box">
+              <input
+                placeholder='Search Events...'
+                className='clssearch-txt' value={this.state.event} onChange={this.handleEventChange}
+                onKeyPress={(event) => {
+                  if (event.key === 'Enter' || event.key === 'Return') {
+                    var link = document.getElementById('eventtest');
+                    link.click();
+                  }
+                }}
+              />
+              <button
+                className="Demo__clear-button"
+                onClick={this.handleCloseClick}
+              >
+                x
+                </button>
+            </div>
+
+          </div>
+          <Link to={{
+            pathname: "/events", event: {
+              event: this.state.event
+            }
+          }} style={{ hidden: true }} id="eventtest">
+          </Link>
+        </div >
+
+      )
+    }
+    var error = null;
+    if (this.state.isError) {
+      error = <MessageHandler message={{ isError: this.state.isError, message: this.state.errorMessage }} />
+    }
+    else if (!this.state.isError && this.state.errorMessage !== '') {
+      error = <MessageHandler message={{ isError: this.state.isError, message: this.state.errorMessage }} />
+    }
+    else {
+      error = null
+    }
+    return (
+      <div >
+        {error}
+        <div className="clssearch-container">
+          <div className="clsToggleSwitchContainer col-lg-12">
+            <div className="clsToggleSwitchContainerInner col-lg-12">
+              <div className="clsToggleLabels">Search Places</div>
+              <ToggleButton
+                inactiveLabel=""
+                activeLabel=""
+                colors={{
+                  activeThumb: {
+                    base: 'rgb(1, 100, 124)',
+                  },
+                  inactiveThumb: {
+                    base: 'rgb(1, 100, 124)',
+                  },
+                  active: {
+                    base: 'rgb(255,255,255);',
+                    hover: 'rgb(255,255,255);',
+                  },
+                  inactive: {
+                    base: 'rgb(255,255,255)',
+                    hover: 'rgb(255,255,255)',
+                  }
+                }}
+                thumbStyle={clsThumbStyle}
+                trackStyle={clsTrackStyle}
+                labelStyle={clsLabelStyle}
+                value={this.state.value}
+                onToggle={(value) => {
+                  this.setState({
+                    value: !value,
+                  })
+                }} />
+              <div className="clsToggleLabels">Search Events</div>
+            </div>
+
+          </div>
+
+          {body}
+        </div>
       </div>
     );
   }
